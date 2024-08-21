@@ -17,9 +17,5 @@ class MainWindow(QMainWindow):
         self.adjustSize()
         self.setFixedSize(self.width(), self.height())
         
-    def addWidgetToVLayout(self, text, size):
-        label = QLabel(text)
-        label.setStyleSheet(f'font-size: {size}px;')
-        
-        
-        self.vLayout.addWidget(label)
+    def addToVLayout(self, widget: QWidget):
+        self.vLayout.addWidget(widget)
