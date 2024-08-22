@@ -1,6 +1,6 @@
 import sys
 
-# from buttons import ButtonsGrid
+from buttons import ButtonsGrid
 from main_window import MainWindow
 from display import Display
 from info import Info
@@ -27,17 +27,17 @@ if __name__ == "__main__":
 
     # Info
     info = Info('25.53 ^ 5')
-    window.addToVLayout(info)
+    window.addWidgetToVLayout(info)
     info.configStyle()
 
     # Display
     display = Display()
     display.setPlaceholderText('Typing something')
-    window.addToVLayout(display)
+    window.addWidgetToVLayout(display)
 
     # Grid
-    # buttonsGrid = ButtonsGrid(display, info, window)
-    # window.vLayout.addLayout(buttonsGrid)
+    buttonsGrid = ButtonsGrid(display)
+    window.vLayout.addLayout(buttonsGrid)
 
     # Run all
     window.adjustFixedSize()
