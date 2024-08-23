@@ -1,3 +1,4 @@
+import math
 from PySide6.QtWidgets import QPushButton, QGridLayout
 from PySide6.QtCore import Slot
 from variables import MEDIUM_FONT_SIZE
@@ -8,6 +9,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from display import Display
     from info import Info
+    from main_window import MainWindow
+
 
 class Button(QPushButton):
     def __init__(self, *args, **kwargs):
@@ -22,7 +25,7 @@ class Button(QPushButton):
 
 
 class ButtonsGrid(QGridLayout):
-    def __init__(self, display: 'Display', info: 'Info', *args, **kwargs):
+    def __init__(self, display: 'Display', info: 'Info', window: 'MainWindow', *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._gridMask = [
@@ -33,22 +36,23 @@ class ButtonsGrid(QGridLayout):
             ['', '0', '.', '='],
         ]
 
-        self.info =  info
-        self.display = display
+        self._info = info
+        self._display = display
         self._equation = ''
         self._left = None
-        self._rigth = None
+        self._right = None
         self._op = None
+        self._window = window
         self._makeGrid()
 
     @property
     def equation(self):
         return self._equation
-    
+
     @equation.setter
     def equation(self, text):
-        self.equation = text
-        self.info.settext(text)
+        self._equation = text
+        self._info.setText(text)
 
     def _makeGrid(self):
         for row_number, row_data in enumerate(self._gridMask):
@@ -60,7 +64,8 @@ class ButtonsGrid(QGridLayout):
                     button.setProperty('cssClass', 'specialButton')
 
                 self.addWidget(button, row_number, column_number)
-                slot = self._makeSlot(self._addButtonTextToDisplay, button_text)
+                slot = self._makeSlot(
+                    self._addButtonTextToDisplay, button_text)
                 button.clicked.connect(slot)
 
     # def _connectButtonClicked(self, button, slot):
@@ -71,12 +76,16 @@ class ButtonsGrid(QGridLayout):
         if text == 'C':
             # slot = self._makeSlot(self.display.clear)
             button.clicked.connect(self._clear)
-        
-        if text in '-+*/':
-            button.clicked.connect(self._makeSlot(self._displayInfoConifig, text))
+
+        if text in '-+*/^':
+            button.clicked.connect(self._makeSlot(
+                self._displayInfoConfig, text))
 
         if text == '=':
             button.clicked.connect(self._calculate)
+
+        if text == '◀':
+            button.clicked.connect(self._backSpace)
 
     def _makeSlot(self, func, *args, **kwargs):
         @Slot(bool)
@@ -85,35 +94,82 @@ class ButtonsGrid(QGridLayout):
         return realSlot
 
     def _addButtonTextToDisplay(self, text):
-        newDisplayValue = self.display.text() + text
+        newDisplayValue = self._display.text() + text
 
         if not isValidNum(newDisplayValue):
             return
 
-        self.display.insert(text)
+        self._display.insert(text)
 
     def _clear(self):
-        self.info.setText('')
+        self._info.setText('')
         self._left = None
         self._op = None
-        self._rigth = None
-        self.display.clear()
+        self._right = None
+        # self.equation = ''
+        self._display.clear()
 
-    def _displayInfoConifig(self, text):
-        displayText = self.display.text()
+    def _displayInfoConfig(self, text):
+        displayText = self._display.text()
         if displayText == '':
             return
-        self._left = displayText
+        self._left = float(displayText)
         self._op = text
-        infoText = self._left + " " + self._op + " ??"
-        self.info.setText(infoText)
-        self.display.clear()
+        self.equation = f'{self._left} {self._op} ??'
+        self._display.clear()
 
     def _calculate(self):
-        displayText = self.display.text()
+        displayText = self._display.text()
         if displayText == '':
             return
-        self._rigth = displayText
-        account = self._left + self._op + self._rigth +'='
-        self.display.setText(eval(account))
-        self.info.setText('')
+        if self._left is None:
+            return
+        self._right = float(displayText)
+        self.equation = f'{self._left} {self._op} {self._right}'
+
+        try:
+            if '^' in self.equation and isinstance(self._left, float):
+                try:
+                    result = math.pow(self._left, self._right)
+                    self._display.setText(str(result))
+                except:
+                    self._clear()
+                    self._showERROR('Burst')
+                    return
+            else:
+                result = eval(self.equation)
+                self._display.setText(str(result))
+
+        except ZeroDivisionError:
+            self._showERROR("Can't divide by zero", 'Zero division ERROR')
+            self._clear()
+            return
+
+        self._info.setText(f'{self.equation} =')
+
+    def _backSpace(self):
+        self._display.backspace()
+
+    def _showERROR(self, text, title_error='ERROR'):
+        msgBox = self._window.makeMsgBox()
+        msgBox.setWindowTitle(title_error)
+        msgBox.setText(text)
+        # msgBox.setInformativeText('BLA BLA BLA BLA BLA')
+        # msgBox.setIcon(msgBox.Icon.Critical)
+
+        msgBox.setStandardButtons(
+            msgBox.StandardButton.Ok  # |
+            # msgBox.StandardButton.Cancel |
+            # msgBox.StandardButton.NoAll
+        )
+        # msgBox.button(msgBox.StandardButton.Cancel).setText('Cancelar')
+
+        msgBox.exec()
+        # result = msgBox.exec()
+
+        # if result == msgBox.StandardButton.Ok:
+        #     print('Ok')
+        # if result == msgBox.StandardButton.Cancel:
+        #     print('Cancel')
+        # if result == msgBox.StandardButton.NoAll:
+        #     print('NoAll')

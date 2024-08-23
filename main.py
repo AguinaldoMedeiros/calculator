@@ -9,11 +9,6 @@ from PySide6.QtWidgets import QApplication
 from styles import setupTheme
 from variables import WINDOWS_ICON_PATH
 
-
-def main():
-    print('teste')
-
-
 if __name__ == "__main__":
     # Creating the application
     app = QApplication(sys.argv)
@@ -26,7 +21,7 @@ if __name__ == "__main__":
     app.setWindowIcon(icon)
 
     # Info
-    info = Info('25.53 ^ 5')
+    info = Info('')
     window.addWidgetToVLayout(info)
     info.configStyle()
 
@@ -36,7 +31,7 @@ if __name__ == "__main__":
     window.addWidgetToVLayout(display)
 
     # Grid
-    buttonsGrid = ButtonsGrid(display, info)
+    buttonsGrid = ButtonsGrid(display, info, window)
     window.vLayout.addLayout(buttonsGrid)
 
     # Run all
